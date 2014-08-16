@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="end">
+	<!--创建属性-->
+	<property name="src.dir" location="src"></property>
+	<property name="test.dir" location="test"></property>
+	<property name="lib.dir" location="lib"></property>
+	
+	<property name="build.dir" location="build"></property>
+	<property name="build.src" location="${build.dir}/src"></property>
+	<property name="build.test" location="${build.dir}/test"></property>
+	<property name="build.dist" location="${build.dir}/dist"></property>
+	<property name="build.test.report" location="${build.test}/reort"></property>
+	<property name="build.classes" location="${build.dir}/classes"></property>
+	<property name="build.test.classes" location="${build.test}/classes"></property>
+	
+	<!--单元测试文路径-->
+	<property name="test.path" value="**/**Test.class"></property>
+	
+	<!--path  jar包路径-->
+	<path id="compile-lib-path">
+		<fileset dir="${lib.dir}" includes="**/**.jar"></fileset>
+	</path>
+	
+	<!--依赖jar包-->
+	<!--编译class文件-->
+	<path id="compile-class-path">
+		<path refid="compile-lib-path"/>
+		<pathelement location="${build.classes}"/>
+	</path>
+	
+	<!--测试文件依赖class文件-->
+	<!--编译测试文件路径-->
+	<path id="compile-testclass-path">
+		<path refid="compile-class-path"/>
+		<pathelement location="${build.test.classes}"/>
+	</path>
+	
+	<!--创建文件夹-->
+	<target name="init">
+		<echo>-----------创建文件夹</echo>
+		<delete dir="${build.dir}"></delete>
+		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${build.src}"/>
+		<mkdir dir="${build.test}"/>
+		<mkdir dir="${build.test.report}"/>
+		<mkdir dir="${build.dist}"/>
+		<mkdir dir="${build.classes}"/>
+		<mkdir dir="${build.test.classes}"/>
+	</target>
+	
+	<!--拷贝文件
+	<target name="copy" depends="init">
+		<echo>拷贝源文件</echo>
+		<copy todir="${build.src}">
+			<fileset dir="${src.dir}" includes="**/**"></fileset>
+		</copy>
+		<copy todir="${build.test}">
+			<fileset dir="${test.dir}" includes="**/**"></fileset>
+		</copy>
+	</target>
+	-->
+	
+	<!--编译源文件  classpathref  依赖的class或者jar包路径-->
+	<target name="compile-src" depends="init">
+		<echo>----------编译源文件</echo>
+		<javac includeantruntime="true" failonerror="true" srcdir="${src.dir}" destdir="${build.classes}" classpathref="compile-lib-path"></javac>
+	</target>
+	
+	<!--编译测试文件-->
+	<target name="compile-test" depends="compile-src">
+		<echo>--------编译测试文件</echo>
+		<javac includeantruntime="true" failonerror="true"  srcdir="${test.dir}" destdir="${build.test.classes}" classpathref="compile-class-path"></javac>
+	</target>
+	
+	<!--运行单元测试-->
+	<target name="run-test" depends="compile-test">
+		<echo>----------运行单元测试</echo>
+		<!--printsummary 打印详细信息  haltonfailure 失败停止继续执行-->
+		<junit printsummary="true" haltonfailure="true">
+			<!--运行单元测试路径-->
+			<classpath refid="compile-testclass-path"></classpath>
+			<!--详细信息 <formatter type="plain" usefile="false"/>-->
+			
+			<!--需要测试的单元测试类 可以多个-->
+			<test name="cn.antjunit.edu.HelloAntJunitTest"></test>
+			
+			<!--批量测试并且生成测试报告 xml格式的-->
+			<formatter type="xml"/>
+			<batchtest todir="${build.test.report}">
+				<fileset dir="${build.test.classes}" includes="${test.path}"></fileset>
+			</batchtest>
+		</junit>
+		<junitreport todir="${build.test.report}">
+			<fileset dir="${build.test.report}" includes="TEST-*.xml"></fileset>
+			<report todir="${build.test.report}/html" format="frames"/>
+		</junitreport>
+	</target>
+	
+	<target name="end" depends="run-test">
+		<echo>测试结束</echo>
+	</target>
+</project>
